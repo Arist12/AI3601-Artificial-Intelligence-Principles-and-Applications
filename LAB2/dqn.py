@@ -76,18 +76,18 @@ def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
     return max(slope * t + start_e, end_e)
 
 if __name__ == "__main__":
-    
+
     """parse the arguments"""
     args = parse_args()
     run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
-    
+
     """we utilize tensorboard yo log the training process"""
     writer = SummaryWriter(f"runs/{run_name}")
     writer.add_text(
         "hyperparameters",
         "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
     )
-    
+
     """comments: """
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -116,37 +116,37 @@ if __name__ == "__main__":
     """comments: """
     obs = envs.reset()
     for global_step in range(args.total_timesteps):
-        
+
         """comments: """
         epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.total_timesteps, global_step)
-        
+
         """comments: """
         if random.random() < epsilon:
             actions = envs.action_space.sample()
         else:
             q_values = q_network(torch.Tensor(obs).to(device))
             actions = torch.argmax(q_values, dim=0).cpu().numpy()
-        
+
         """comments: """
         next_obs, rewards, dones, infos = envs.step(actions)
         # envs.render() # close render during training
-        
+
         if dones:
             print(f"global_step={global_step}, episodic_return={infos['episode']['r']}")
             writer.add_scalar("charts/episodic_return", infos["episode"]["r"], global_step)
             writer.add_scalar("charts/episodic_length", infos["episode"]["l"], global_step)
-        
+
         """comments: """
         rb.add(obs, next_obs, actions, rewards, dones, infos)
-        
+
         """comments: """
         obs = next_obs if not dones else envs.reset()
-        
+
         if global_step > args.learning_starts and global_step % args.train_frequency == 0:
-            
+
             """comments: """
             data = rb.sample(args.batch_size)
-            
+
             """comments: """
             with torch.no_grad():
                 target_max, _ = target_network(data.next_observations).max(dim=1)
@@ -158,16 +158,16 @@ if __name__ == "__main__":
             if global_step % 100 == 0:
                 writer.add_scalar("losses/td_loss", loss, global_step)
                 writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
-            
+
             """comments: """
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            
+
             """comments: """
             if global_step % args.target_network_frequency == 0:
                 target_network.load_state_dict(q_network.state_dict())
-    
+
     """close the env and tensorboard logger"""
     envs.close()
     writer.close()
