@@ -7,7 +7,7 @@ import gym
 from agent import SarsaAgent
 ##### START CODING HERE #####
 # This code block is optional. You can import other libraries or define your utility functions if necessary.
-
+import matplotlib.pyplot as plt
 ##### END CODING HERE #####
 
 # construct the environment
@@ -27,7 +27,8 @@ config = {
     "alpha": 1,
     "gamma": 1,
     "epsilon": 1,
-    "alpha_decay": 0.99
+    "alpha_decay": 0.99,
+    "print_result": True
 }
 
 # construct the intelligent agent.
@@ -44,8 +45,6 @@ for episode in range(1000):
     episode_reward = 0
     # reset env
     s = env.reset()
-    # render env. You can remove all render() to turn off the GUI to accelerate training.
-    env.render()
     # agent interacts with the environment
     for iter in range(500):
         # choose an action
@@ -88,6 +87,20 @@ while True:
 
 # close the render window after training.
 env.close()
+
+if config["print_result"]:
+    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+
+    x = np.arange(episode)
+    ax.plot(x, episode_rewards, color='blue', linestyle='-', linewidth=1.0, alpha=0.7)
+    # plt.title('Episode Reward',size=22)
+    ax.tick_params(labelsize=18)
+    plt.xlabel('Epoch', size=25)
+    plt.ylabel('Episode Reward', size=25)
+
+    plt.tight_layout()
+    plt.savefig('sarsa.png',bbox_inches='tight')
+    plt.show()
 
 ####### END CODING HERE #######
 
