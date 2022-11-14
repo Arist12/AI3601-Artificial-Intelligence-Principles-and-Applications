@@ -28,7 +28,8 @@ config = {
     "gamma": 1,
     "epsilon": 1,
     "alpha_decay": 0.99,
-    "print_result": True
+    "print_result": True,
+    "early_stop": True
 }
 
 # construct the intelligent agent.
@@ -62,11 +63,12 @@ for episode in range(1000):
 
     agent.decay()
     # early exit if the policy is already converged
-    if episode_reward > best_rewards[0]:
-        best_rewards = (episode_reward, episode)
-    elif episode - best_rewards[1] >= 100:
-        print("early stop👍!!")
-        break
+    if config["early_stop"]:
+        if episode_reward > best_rewards[0]:
+            best_rewards = (episode_reward, episode)
+        elif episode - best_rewards[1] >= 100:
+            print("early stop👍!!")
+            break
     episode_rewards.append(episode_reward)
     epsilon_values.append(agent.get_epsilon())
 
@@ -91,7 +93,7 @@ env.close()
 if config["print_result"]:
     fig, ax = plt.subplots(1, 1, figsize=(8, 5))
 
-    x = np.arange(episode)
+    x = np.arange(episode) if config["early_stop"] else np.arange(1000)
     ax.plot(x, episode_rewards, color='blue', linestyle='-', linewidth=1.0, alpha=0.7)
     # plt.title('Episode Reward',size=22)
     ax.tick_params(labelsize=18)
@@ -99,9 +101,19 @@ if config["print_result"]:
     plt.ylabel('Episode Reward', size=25)
 
     plt.tight_layout()
-    plt.savefig('sarsa.png',bbox_inches='tight')
+    plt.savefig('sarsa_1.png',bbox_inches='tight')
     plt.show()
 
+    _, ax = plt.subplots(1, 1, figsize=(8, 5))
+    ax.plot(x, epsilon_values, color='blue', linestyle='-', linewidth=1.0, alpha=0.8)
+    # plt.title('Episode Reward',size=22)
+    ax.tick_params(labelsize=18)
+    plt.xlabel('Epoch', size=25)
+    plt.ylabel('Epsilon Value', size=25)
+
+    plt.tight_layout()
+    plt.savefig('sarsa_2.png',bbox_inches='tight')
+    plt.show()
 ####### END CODING HERE #######
 
 
