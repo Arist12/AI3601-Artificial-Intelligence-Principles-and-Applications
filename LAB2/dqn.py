@@ -3,7 +3,7 @@ import argparse
 import os
 import random
 import time
-
+import matplotlib.pyplot as plt
 import gym
 import numpy as np
 import torch
@@ -22,19 +22,19 @@ def parse_args():
         help="seed of the experiment")
     parser.add_argument("--total-timesteps", type=int, default=500000,
         help="total timesteps of the experiments")
-    parser.add_argument("--learning-rate", type=float, default=2.5e-4,
+    parser.add_argument("--learning-rate", type=float, default=0.003,
         help="the learning rate of the optimizer")
-    parser.add_argument("--buffer-size", type=int, default=10000,
+    parser.add_argument("--buffer-size", type=int, default=2000,
         help="the replay memory buffer size")
-    parser.add_argument("--gamma", type=float, default=0.6,
+    parser.add_argument("--gamma", type=float, default=0.98,
         help="the discount factor gamma")
-    parser.add_argument("--target-network-frequency", type=int, default=500,
+    parser.add_argument("--target-network-frequency", type=int, default=200,
         help="the timesteps it takes to update the target network")
-    parser.add_argument("--batch-size", type=int, default=128,
+    parser.add_argument("--batch-size", type=int, default=256,
         help="the batch size of sample from the reply memory")
-    parser.add_argument("--start-e", type=float, default=0.3,
+    parser.add_argument("--start-e", type=float, default=0.35,
         help="the starting epsilon for exploration")
-    parser.add_argument("--end-e", type=float, default=0.05,
+    parser.add_argument("--end-e", type=float, default=0.03,
         help="the ending epsilon for exploration")
     parser.add_argument("--exploration-fraction", type=float, default=0.1,
         help="the fraction of `total-timesteps` it takes from start-e to go end-e")
@@ -56,7 +56,7 @@ def make_env(env_id, seed):
     return env
 
 class QNetwork(nn.Module):
-    """comments: """
+    """initialize the deep neural network for Q-learning, inherited from nn.Module. In __init__, First call the initializer of father class, because only if we call the initializer of nn.Module can Pytroch track the things that we are adding to the network. Then build our own neural network which is composed of 3 linear layers.  Use Sequential to wrap the all 3 layers."""
     def __init__(self, env):
         super().__init__()
         self.network = nn.Sequential(
@@ -71,40 +71,41 @@ class QNetwork(nn.Module):
         return self.network(x)
 
 def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
-    """comments: """
+    """schedule the epsilon value linearly. First divide epsilon range to common pieces and provide each time step with epsilon_value = start_e + t * piece_size"""
     slope = (end_e - start_e) / duration
     return max(slope * t + start_e, end_e)
 
+episode_rewards = []
 if __name__ == "__main__":
 
     """parse the arguments"""
     args = parse_args()
     run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
 
-    """we utilize tensorboard yo log the training process"""
+    """we utilize tensorboard to log the training process"""
     writer = SummaryWriter(f"runs/{run_name}")
     writer.add_text(
         "hyperparameters",
         "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
     )
 
-    """comments: """
+    """set the seed of random number generator of all backends to a fixed number to guarantee reporductivity"""
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = True
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    """comments: """
+    """set the seed of the random number generator of gym environment to guarantee reproductivity and construct the gym environment"""
     envs = make_env(args.env_id, args.seed)
 
-    """comments: """
+    """initialize the networks and the optimizer, set the parameters of the two network as the same, move the model to GPU if available"""
     q_network = QNetwork(envs).to(device)
     optimizer = optim.Adam(q_network.parameters(), lr=args.learning_rate)
     target_network = QNetwork(envs).to(device)
     target_network.load_state_dict(q_network.state_dict())
 
-    """comments: """
+    """set the parameters of replay memory according to the parameters given in args"""
     rb = ReplayBuffer(
         args.buffer_size,
         envs.observation_space,
@@ -135,6 +136,7 @@ if __name__ == "__main__":
             print(f"global_step={global_step}, episodic_return={infos['episode']['r']}")
             writer.add_scalar("charts/episodic_return", infos["episode"]["r"], global_step)
             writer.add_scalar("charts/episodic_length", infos["episode"]["l"], global_step)
+            episode_rewards.append(infos['episode']['r'])
 
         """comments: """
         rb.add(obs, next_obs, actions, rewards, dones, infos)
@@ -168,6 +170,33 @@ if __name__ == "__main__":
             if global_step % args.target_network_frequency == 0:
                 target_network.load_state_dict(q_network.state_dict())
 
-    """close the env and tensorboard logger"""
+
+
+    torch.save(q_network.state_dict(), f"lr_{args.learning_rate}++bfSize_{args.buffer_size}++gamma_{args.gamma}++tnf_{args.target_network_frequency}++startE_{args.start_e}++endE_{args.end_e}.pth")
+    # show the result of DQN
+    _, ax = plt.subplots(1, 1, figsize=(8, 5))
+    ax.plot(np.arange(len(episode_rewards)), episode_rewards, color='blue', linestyle='-', linewidth=1.0, alpha=0.8)
+    # plt.title('Episode Reward',size=22)
+    ax.tick_params(labelsize=18)
+    plt.xlabel('Epoch', size=10)
+    plt.ylabel('Episode Reward', size=10)
+
+    plt.tight_layout()
+    plt.savefig('DQN_1.png',bbox_inches='tight')
+    plt.show()
+
+
+    obs = envs.reset()
+    envs.render()
+    while True:
+        q_values = q_network(torch.Tensor(obs).to(device))
+        actions = torch.argmax(q_values, dim=0).cpu().numpy()
+        next_obs, rewards, dones, infos = envs.step(actions)
+        envs.render()
+        if dones:
+            break
+        obs = next_obs
+
     envs.close()
     writer.close()
+    """close the env and tensorboard logger"""
