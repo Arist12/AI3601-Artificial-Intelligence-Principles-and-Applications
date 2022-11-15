@@ -114,21 +114,21 @@ if __name__ == "__main__":
         handle_timeout_termination=False,
     )
 
-    """comments: """
+    """initialize the environment, get prepared for training."""
     obs = envs.reset()
     for global_step in range(args.total_timesteps):
 
-        """comments: """
+        """shedule epsilon for each global step using linear_schedule function, which performs a linear decay"""
         epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.total_timesteps, global_step)
 
-        """comments: """
+        """perform epsilon-greedy policy, act randomly with epsilon probability"""
         if random.random() < epsilon:
             actions = envs.action_space.sample()
         else:
             q_values = q_network(torch.Tensor(obs).to(device))
             actions = torch.argmax(q_values, dim=0).cpu().numpy()
 
-        """comments: """
+        """perform the chosen action and renew the environment"""
         next_obs, rewards, dones, infos = envs.step(actions)
         # envs.render() # close render during training
 
@@ -138,41 +138,41 @@ if __name__ == "__main__":
             writer.add_scalar("charts/episodic_length", infos["episode"]["l"], global_step)
             episode_rewards.append(infos['episode']['r'])
 
-        """comments: """
+        """add current action to the memory pool for later training use"""
         rb.add(obs, next_obs, actions, rewards, dones, infos)
 
-        """comments: """
+        """renew the environment for the next action or reset the action if the mission is completed"""
         obs = next_obs if not dones else envs.reset()
 
         if global_step > args.learning_starts and global_step % args.train_frequency == 0:
 
-            """comments: """
+            """samble #batch_size training samples from the memory pool"""
             data = rb.sample(args.batch_size)
 
-            """comments: """
+            """clear previous gradient and calculate loss via target net using MSELoss"""
             with torch.no_grad():
                 target_max, _ = target_network(data.next_observations).max(dim=1)
                 td_target = data.rewards.flatten() + args.gamma * target_max * (1 - data.dones.flatten())
             old_val = q_network(data.observations).gather(1, data.actions).squeeze()
             loss = F.mse_loss(td_target, old_val)
 
-            """comments: """
+            """record training status every 100 global steps"""
             if global_step % 100 == 0:
                 writer.add_scalar("losses/td_loss", loss, global_step)
                 writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
 
-            """comments: """
+            """calculate gradient and perform gradient descent algorithm to update parameters for Q-net using Adam optimizer"""
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            """comments: """
+            """set the parameters of target net to be the same as q-net every #target_network_frequency global steps"""
             if global_step % args.target_network_frequency == 0:
                 target_network.load_state_dict(q_network.state_dict())
 
 
 
-    torch.save(q_network.state_dict(), f"lr_{args.learning_rate}++bfSize_{args.buffer_size}++gamma_{args.gamma}++tnf_{args.target_network_frequency}++startE_{args.start_e}++endE_{args.end_e}.pth")
+    torch.save(q_network.state_dict(), f"batchSize_{args.batch_size}++lr_{args.learning_rate}++bfSize_{args.buffer_size}++gamma_{args.gamma}++tnf_{args.target_network_frequency}++startE_{args.start_e}++endE_{args.end_e}.pth")
     # show the result of DQN
     _, ax = plt.subplots(1, 1, figsize=(8, 5))
     ax.plot(np.arange(len(episode_rewards)), episode_rewards, color='blue', linestyle='-', linewidth=1.0, alpha=0.8)
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     plt.ylabel('Episode Reward', size=10)
 
     plt.tight_layout()
-    plt.savefig('DQN_1.png',bbox_inches='tight')
+    plt.savefig(f"batchSize_{args.batch_size}++lr_{args.learning_rate}++bfSize_{args.buffer_size}++gamma_{args.gamma}++tnf_{args.target_network_frequency}++startE_{args.start_e}++endE_{args.end_e}.png",bbox_inches='tight')
     plt.show()
 
 
