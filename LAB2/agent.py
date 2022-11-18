@@ -35,9 +35,8 @@ class SarsaAgent(object):
             action = np.random.choice(self.all_actions)
         return action
 
-    def learn(self, s, a, s_, r):
+    def learn(self, s, a, s_, r, action):
         """learn from experience"""
-        action = self.choose_action(s_)
         self.Q_value[s][a] += self.alpha * (r + self.gamma * self.Q_value[s_][action] - self.Q_value[s][a])
         return
 

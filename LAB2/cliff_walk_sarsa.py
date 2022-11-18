@@ -51,12 +51,13 @@ for episode in range(1000):
         # choose an action
         a = agent.choose_action(s)
         s_, r, isdone, info = env.step(a)
+        action = agent.choose_action(s_)
         # update the episode reward
         episode_reward += r
         print(f"{s} {a} {s_} {r} {isdone}")
         # agent learns from experience
-        agent.learn(s, a, s_, r)
-        s = s_
+        agent.learn(s, a, s_, r, action)
+        s, a = s_, action
         if isdone:
             break
     print('episode:', episode, 'episode_reward:', episode_reward, 'epsilon:', agent.epsilon)
