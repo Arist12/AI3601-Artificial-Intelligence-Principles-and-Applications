@@ -11,7 +11,7 @@ BatteryState = readFactorTable(['battery'], [0.9, 0.1], [[1, 0]])
 FuelState = readFactorTable(['fuel'], [0.9, 0.1], [[1, 0]])
 GaugeBF = readFactorTable(['gauge', 'battery', 'fuel'], [0.8, 0.2, 0.2, 0.1, 0.2, 0.8, 0.8, 0.9], [[1, 0], [1, 0], [1, 0]])
 
-carNet = [BatteryState, FuelState, GaugeBF] # carNet is a list of factors 
+carNet = [BatteryState, FuelState, GaugeBF] # carNet is a list of factors
 ## Notice that different order of operations give the same answer
 ## (rows/columns may be permuted)
 joinFactors(joinFactors(BatteryState, FuelState), GaugeBF)
@@ -66,7 +66,7 @@ obsVals  = [1, 2, 1]
 p = inference(risk_net, margVars, obsVars, obsVals)
 print(p)
 
- 
+
 ###########################################################################
 # Please write your own test script
 # HW3 test scripts start from here
