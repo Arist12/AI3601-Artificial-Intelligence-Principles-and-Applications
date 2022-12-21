@@ -3,6 +3,7 @@
 from BayesianNetworks import *
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #############################
 ## Example Tests from Bishop `Pattern Recognition and Machine Learning` textbook on page 377
@@ -50,7 +51,6 @@ stay_up     = readFactorTablefromData(riskFactorNet, ['stay_up', 'income'])
 bmi         = readFactorTablefromData(riskFactorNet, ['bmi', 'income'])
 diabetes    = readFactorTablefromData(riskFactorNet, ['diabetes', 'bmi'])
 
-## you need to create more factor tables
 
 risk_net = [income, smoke, long_sit, stay_up, exercise, bmi, diabetes]
 print("income dataframe is ")
@@ -72,5 +72,122 @@ print(p)
 # HW3 test scripts start from here
 ###########################################################################
 
+################################ task 1:
+## Create factors for the bayesian network
+# income      = readFactorTablefromData(riskFactorNet, ['income'])
+# smoke       = readFactorTablefromData(riskFactorNet, ['smoke', 'income'])
+# exercise    = readFactorTablefromData(riskFactorNet, ['exercise', 'income'])
+# long_sit    = readFactorTablefromData(riskFactorNet, ['long_sit', 'income'])
+# stay_up     = readFactorTablefromData(riskFactorNet, ['stay_up', 'income'])
+# bmi         = readFactorTablefromData(riskFactorNet, ['bmi', 'exercise', 'income', 'long_sit'])
+# diabetes    = readFactorTablefromData(riskFactorNet, ['diabetes', 'bmi'])
+# bp          = readFactorTablefromData(riskFactorNet, ['bp', 'exercise', 'long_sit', 'income', 'stay_up', 'smoke'])
+# cholest     = readFactorTablefromData(riskFactorNet, ['cholesterol', 'exercise', 'stay_up', 'income', 'smoke'])
+# stroke       = readFactorTablefromData(riskFactorNet, ['stroke', 'bmi', 'bp', 'cholesterol'])
+# attack      = readFactorTablefromData(riskFactorNet, ['attack', 'bmi', 'bp', 'cholesterol'])
+# angina      = readFactorTablefromData(riskFactorNet, ['angina', 'bmi', 'bp', 'cholesterol'])
 
 
+################################ task 2
+# build the risk net
+# risk_net = [income, smoke, exercise, long_sit, stay_up, bmi, diabetes, bp, cholest, stroke, attack, angina]
+# # all the factors
+# factors = set(riskFactorNet.columns)
+
+# print("task2 begins\n")
+# for disease in ('diabetes', 'stroke', 'attack', 'angina'):
+#     print(f"task2: {disease} begins")
+#     margVars = list(factors - {disease, 'smoke', 'exercise','long_sit', 'stay_up'})
+#     obsVars  = ['smoke', 'exercise', 'long_sit', 'stay_up']
+#     obsVals  = [1, 2, 1, 1]
+#     print(inference(risk_net, margVars, obsVars, obsVals))
+
+#     obsVals  = [2, 1, 2, 2]
+#     print(inference(risk_net, margVars, obsVars, obsVals))
+
+#     margVars = list(factors - {disease, 'bp', 'cholesterol','bmi'})
+#     obsVars  = ['bp', 'cholesterol','bmi']
+#     obsVals = [1, 1, 3]
+#     print(inference(risk_net, margVars, obsVars, obsVals))
+
+#     obsVals = [3, 2, 2]
+#     print(inference(risk_net, margVars, obsVars, obsVals))
+
+#     print(f"task2: {disease} ends\n\n")
+# print("task2 completed")
+
+
+################################ task 3
+# for i, disease in enumerate(('diabetes', 'stroke', 'attack', 'angina')):
+#     margVars = list(factors - {disease, 'income'})
+#     prob = []
+#     for income in range(1, 9):
+#         obsVars  = ["income"]
+#         obsVals  = [income]
+#         result = inference(risk_net, margVars, obsVars, obsVals)
+#         prob.append(result["probs"][0])
+
+#     plt.subplot(2, 2, i+1)
+#     plt.plot(np.arange(1, 9), prob)
+#     plt.xlabel("income-level")
+#     plt.ylabel(f"Probs of having {disease}")
+#     plt.show()
+# plt.tight_layout()
+# plt.savefig("a.png")
+
+
+################################ task 4
+# # Create factors for the bayesian network
+# new_stroke       = readFactorTablefromData(riskFactorNet, ['stroke', 'bmi', 'bp', 'cholesterol', 'exercise', 'smoke'])
+# new_attack      = readFactorTablefromData(riskFactorNet, ['attack', 'bmi', 'bp', 'cholesterol', 'exercise', 'smoke'])
+# new_angina      = readFactorTablefromData(riskFactorNet, ['angina', 'bmi', 'bp', 'cholesterol', 'exercise', 'smoke'])
+# new_diabetes    = readFactorTablefromData(riskFactorNet, ['diabetes', 'bmi', 'exercise', 'smoke'])
+
+# # build the new risk net
+# risk_net = [income, smoke, exercise, long_sit, stay_up, bmi, new_diabetes, bp, cholest, new_stroke, new_attack, new_angina]
+# # all the factors
+# factors = set(riskFactorNet.columns)
+
+
+# for disease in ('diabetes', 'stroke', 'attack', 'angina'):
+#     print(f"task4: {disease} begins")
+#     margVars = list(factors - {disease, 'smoke', 'exercise','long_sit', 'stay_up'})
+#     obsVars  = ['smoke', 'exercise', 'long_sit', 'stay_up']
+#     obsVals  = [1, 2, 1, 1]
+#     print(inference(risk_net, margVars, obsVars, obsVals))
+
+#     obsVals  = [2, 1, 2, 2]
+#     print(inference(risk_net, margVars, obsVars, obsVals))
+
+#     margVars = list(factors - {disease, 'bp', 'cholesterol','bmi'})
+#     obsVars  = ['bp', 'cholesterol','bmi']
+#     obsVals = [1, 1, 3]
+#     print(inference(risk_net, margVars, obsVars, obsVals))
+
+#     obsVals = [3, 2, 2]
+#     print(inference(risk_net, margVars, obsVars, obsVals))
+#     print(f"task4: {disease} completed\n\n")
+
+
+################################ task 5
+# print("task5 (without edges): begin")
+# margVars = list(factors - {"diabetes", "stroke"})
+# obsVars  = ['diabetes']
+# obsVals  = [1]
+# print(inference(risk_net, margVars, obsVars, obsVals))
+# obsVals  = [3]
+# print(inference(risk_net, margVars, obsVars, obsVals))
+# print("task5 (without edges): ends\n\n")
+
+
+# print("task5 (without edges): begin")
+# new_stroke_2     = readFactorTablefromData(riskFactorNet, ['stroke', 'bmi', 'bp', 'cholesterol', 'exercise', 'smoke', 'diabetes'])
+# risk_net = [income, smoke, exercise, long_sit, stay_up, bmi, new_diabetes, bp, cholest, new_stroke_2, new_attack, new_angina]
+
+# margVars = list(factors - {"diabetes", "stroke"})
+# obsVars  = ['diabetes']
+# obsVals  = [1]
+# print(inference(risk_net, margVars, obsVars, obsVals))
+# obsVals  = [3]
+# print(inference(risk_net, margVars, obsVars, obsVals))
+# print("task5 (without edges): ends\n\n")
