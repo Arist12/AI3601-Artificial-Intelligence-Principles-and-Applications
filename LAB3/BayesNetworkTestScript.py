@@ -181,7 +181,7 @@ print(inference(risk_net, margVars, obsVars, obsVals))
 print("task5 (without edges): ends\n\n")
 
 
-print("task5 (without edges): begin")
+print("task5 (with edges): begin")
 new_stroke_2     = readFactorTablefromData(riskFactorNet, ['stroke', 'bmi', 'bp', 'cholesterol', 'exercise', 'smoke', 'diabetes'])
 risk_net = [income, smoke, exercise, long_sit, stay_up, bmi, new_diabetes, bp, cholest, new_stroke_2, new_attack, new_angina]
 
@@ -191,4 +191,4 @@ obsVals  = [1]
 print(inference(risk_net, margVars, obsVars, obsVals))
 obsVals  = [3]
 print(inference(risk_net, margVars, obsVars, obsVals))
-print("task5 (without edges): ends\n\n")
+print("task5 (with edges): ends\n\n")
